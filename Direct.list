@@ -27,6 +27,7 @@ IP-CIDR,114.114.115.115/32,no-resolve
 
 DOMAIN-KEYWORD,sptv
 DOMAIN-KEYWORD,sgtv
+DOMAIN-KEYWORD,cebpubservice
 DOMAIN-SUFFIX,ok-skins.com
 DOMAIN-SUFFIX,ecouser.net
 DOMAIN-SUFFIX,oray.com
