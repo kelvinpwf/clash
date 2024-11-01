@@ -28,6 +28,9 @@ IP-CIDR,114.114.115.115/32,no-resolve
 DOMAIN-KEYWORD,sptv
 DOMAIN-KEYWORD,sgtv
 DOMAIN-KEYWORD,cebpubservice
+DOMAIN-KEYWORD,epson
+DOMAIN-KEYWORD,jindidata
+DOMAIN-KEYWORD,didistatic
 DOMAIN-SUFFIX,ok-skins.com
 DOMAIN-SUFFIX,ecouser.net
 DOMAIN-SUFFIX,oray.com
@@ -41,6 +44,13 @@ DOMAIN-SUFFIX,gotokeep.com
 DOMAIN-SUFFIX,miele.com
 DOMAIN-SUFFIX,umeng.com
 DOMAIN-SUFFIX,alipan.com
+DOMAIN-SUFFIX,onethingpcs.com
+DOMAIN-SUFFIX,ugreengroup.com
+DOMAIN-SUFFIX,ninebot.com
+DOMAIN-SUFFIX,tesla.com
+DOMAIN-SUFFIX,dji.com
+DOMAIN-SUFFIX,djiservice.org
+
 
 # 360
 DOMAIN-SUFFIX,360.com
