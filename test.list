@@ -1,4 +1,5 @@
 IP-CIDR,142.251.215.0/24,no-resolve
+DOMAIN-KEYWORD,speedtest
 DOMAIN-SUFFIX,openwrt.ai
 DOMAIN-SUFFIX,vultr.com
 DOMAIN-SUFFIX,test-ipv6.com
