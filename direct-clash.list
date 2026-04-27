@@ -1,17 +1,17 @@
-DOMAIN,istore.istoreos.com
+#DOMAIN,istore.istoreos.com
 DOMAIN-SUFFIX,makerworld.com
 #DOMAIN-SUFFIX,openwrt.org
-DOMAIN-SUFFIX,supes.top
-DOMAIN-SUFFIX,openwrt.ai
-DOMAIN-SUFFIX,epark.cc
-DOMAIN-SUFFIX,shuinfo.com
+#DOMAIN-SUFFIX,supes.top
+#DOMAIN-SUFFIX,openwrt.ai
+#DOMAIN-SUFFIX,epark.cc
+#DOMAIN-SUFFIX,shuinfo.com
 DOMAIN-SUFFIX,sc.com
-DOMAIN-SUFFIX,lgthinq.com
-DOMAIN-SUFFIX,kooldns.cn
-DOMAIN-SUFFIX,tocmcc.cn
+#DOMAIN-SUFFIX,lgthinq.com
+#DOMAIN-SUFFIX,kooldns.cn
+#DOMAIN-SUFFIX,tocmcc.cn
 #DOMAIN-SUFFIX,miraiemby.com
 #DOMAIN,mi2.miraiemby.com
 #DOMAIN,stream-3.miraiemby.com
 #DOMAIN,stream-1.miraiemby.com
-DOMAIN,macat.vip
+#DOMAIN,macat.vip
 
