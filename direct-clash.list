@@ -1,4 +1,5 @@
 DOMAIN-SUFFIX,makerworld.com
 DOMAIN-SUFFIX,sc.com
-DOMAIN-SUFFIX,bangumi.ca
-
+#DOMAIN-SUFFIX,bangumi.ca
+DOMAIN,ap-cn01.emby.bangumi.ca
+DOMAIN,ap-cn02.emby.bangumi.ca
