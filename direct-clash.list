@@ -5,4 +5,5 @@ DOMAIN,ap-cn02.emby.bangumi.ca
 DOMAIN-SUFFIX,bangumi.ca
 #DOMAIN,v1.uhdnow.com
 #DOMAIN,v1-vod2.uhdnow.com
-DOMAIN-SUFFIX,hgemby.qzz.io
+DOMAIN,hgemby.qzz.io
+DOMAIN,hg.hgemby.qzz.io
