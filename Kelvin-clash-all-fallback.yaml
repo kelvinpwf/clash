@@ -1,0 +1,635 @@
+# ========================
+# Kelvin Clash-ALL 旁路由优化版
+# ========================
+
+# ============================================
+# ✈️ 机场顺位总控台 (想换主备机场，只需修改这里)
+# ============================================
+# 将你最想用的机场名字填入 Primary，剩下的填入 Backup
+Anchor-Primary: &Primary [nice云]
+Anchor-Backup: &Backup [PolYun,猫耳云]
+proxy-providers:
+  灵魂云:
+    url: "https://kelvinpwfsubstore.tocmcc.cn:443/kelvinpwfkelvinpwfke/download/%E7%81%B5%E9%AD%82%E4%BA%91"
+    type: http
+    interval: 86400
+    health-check: {enable: true, url: https://www.gstatic.com/generate_204, interval: 180}
+    proxy: 直连
+  PolYun:
+    url: "https://kelvinpwfsubstore.tocmcc.cn:443/kelvinpwfkelvinpwfke/download/PolYun"
+    type: http
+    interval: 86400
+    health-check: {enable: true, url: https://www.gstatic.com/generate_204, interval: 180}
+    proxy: 直连
+  猫耳云:
+    url: "https://kelvinpwfsubstore.tocmcc.cn:443/kelvinpwfkelvinpwfke/download/%E7%8C%AB%E8%80%B3%E4%BA%91"
+    type: http
+    interval: 86400
+    health-check: {enable: true, url: https://www.gstatic.com/generate_204, interval: 180}
+    proxy: 直连 
+  nice云:
+    url: "https://kelvinpwfsubstore.tocmcc.cn/kelvinpwfkelvinpwfke/download/nice%E4%BA%91"
+    type: http
+    interval: 86400
+    health-check: {enable: true, url: https://www.gstatic.com/generate_204, interval: 180}
+    proxy: 直连
+
+proxies:
+  - {name: 直连, type: direct}
+  - {name: 拒绝, type: reject}
+  
+# OpenClash 设置
+sniffer:
+  enable: true
+  override-destination: true
+  sniff:
+    QUIC:
+      ports:
+      - 443
+    TLS:
+      ports:
+      - 443
+      - 8443
+    HTTP:
+      ports:
+      - 80
+      - 8080-8880
+      override-destination: true
+  force-domain:
+  - " .netflix.com"
+  - "+.nflxvideo.net"
+  - "+.amazonaws.com"
+  - "+.media.dssott.com"
+  skip-domain:
+  - "+.apple.com"
+  - Mijia Cloud
+  - dlg.io.mi.com
+  - "+.oray.com"
+  - "+.sunlogin.net"
+  - "+.push.apple.com"
+  parse-pure-ip: true
+  
+# ========================
+# 主要端口设置
+# ========================
+mixed-port: 7890
+redir-port: 7892
+tproxy-port: 7895
+
+allow-lan: true
+bind-address: '*'
+mode: rule
+log-level: warning          # 生产环境用 warning，减少日志噪音；调试时改回 info
+find-process-mode: always   # 支持按进程名分流（借鉴 MihomoPro）
+ipv6: false
+
+tcp-concurrent: true
+unified-delay: true  # 顺便加上这个，让测速显示的延迟更真实（去除握手时间）
+
+external-controller: 127.0.0.1:9090
+secret: "Kv@9x#mP2$wL7qR!"
+external-ui: "/usr/share/openclash/ui"
+external-ui-name: metacubexd
+keep-alive-interval: 15
+keep-alive-idle: 600
+
+# 实验性功能（借鉴 MihomoPro）
+# quic-go-disable-gso: 禁用 GSO 可提升 QUIC 在部分 Linux 内核上的稳定性
+experimental:
+  quic-go-disable-gso: true
+
+# LAN 认证（借鉴 MihomoPro）
+# 局域网内可免密访问，防止外部通过代理端口绕过认证
+authentication:
+  - "kelvin:Kv@9x#mP2$wL7qR!"   # 用户名:密码，与 secret 保持一致的强度
+skip-auth-prefixes:
+  - 127.0.0.1/8
+  - 192.168.2.0/24
+geox-url:
+  geoip: https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat
+  mmdb: https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/lite/Country.mmdb
+  geosite: https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat
+  asn: https://testingcf.jsdelivr.net/gh/xishang0128/geoip@release/GeoLite2-ASN.mmdb
+
+geodata-mode: true
+geo-auto-update: true
+geo-update-interval: 24
+
+# ========================
+# 终极优化版 DNS 设置 (纯净公共 DNS 版)
+# ========================
+dns:
+  enable: true
+  listen: 0.0.0.0:7874
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  
+  # 【起动机 DNS】：纯 IP 格式，仅用于解析下方 DoH 链接本身的域名
+  # 旁路由环境下只用国内 DNS 引导，避免境外 IP 被污染或超时
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+  # 【解析代理节点 IP 的 DNS】：防止节点域名被污染倒在起点
+  proxy-server-nameserver:         
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+
+  # ==========================================
+  # 【第一层：精准定向 (Nameserver-Policy)】
+  # 已知域名直接发往对应 DNS，极速出结果，不占用下方未知池的资源
+  # ==========================================
+  nameserver-policy:
+    "geosite:cn,private": 
+      - 112.4.0.55
+      - 221.131.143.69
+      #- https://dns.alidns.com/dns-query
+      #- https://doh.pub/dns-query
+    "geosite:geolocation-!cn":
+      - https://dns.google/dns-query         # 替换为 Google DoH
+      - https://cloudflare-dns.com/dns-query # 替换为 Cloudflare DoH
+ #==========================================
+  # 【第二层：未知域名处理池 (核心解答)】
+  # 只有当域名不在上述 geosite 列表里时，才会走到这里
+  #==========================================
+  
+  # 主力查询（先问国内）：如果是国内未被收录的新域名，立刻拿到 CDN 极速 IP
+  nameserver:
+    - 112.4.0.55
+    - 221.131.143.69
+    #- https://dns.alidns.com/dns-query
+    #- https://doh.pub/dns-query
+    #- https://dns.google/dns-query   # 兜底：境外节点域名国内 DNS 无记录时使用
+    
+  # 备用查询（防污染）：国内返回假 IP 时，采用此处的真实返回结果
+  fallback:
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.quad9.net/dns-query      # 增加 Quad9 作为稳健兜底
+
+  # 【核心裁判】：判断未知域名到底该用国内还是国外 DNS 的结果
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite: [gfw]
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.0/8
+      # 建议增加以下防污染网段
+      - ::1/128
+      - fc00::/7
+      - fe80::/10
+      
+  # ==========================================
+  # 【Fake-IP 过滤】
+  # ==========================================
+  fake-ip-filter-mode: blacklist
+  fake-ip-filter:
+    - '+.lan'
+    - '+.local'
+    # --- 微信/腾讯 ---
+    - '+.weixin.com'
+    - '+.wechat.com'
+    - '+.qq.com'
+    - '+.tencent.com'
+    # --- 新增：抖音核心域名 ---
+    - '+.amemv.com'
+    - '+.douyinvod.com'
+    - '+.snssdk.com'
+    - '+.douyin.com'
+    # --- 新增：小红书核心域名 ---
+    - '+.xiaohongshu.com'
+    - '+.xhscdn.com'
+    # ------------------------------------
+    - 'rule-set:oc-cn-domain'
+    - 'rule-set:Private'
+    
+# ========================
+# TUN 模块
+# ========================
+tun:
+  enable: true
+  stack: gvisor
+  device: utun
+  endpoint-independent-nat: true
+  auto-route: true
+  auto-detect-interface: true
+  auto-redirect: true
+  strict-route: true
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+  
+# ========================
+# 策略组起始部分
+# ========================
+default: &default
+  type: select
+  proxies: 
+    - 🚀 默认代理 
+    - 香港-故转
+    - 日本-故转
+    - 美国-故转
+    - 台湾-故转
+    - 新加坡-故转
+    - 其他-故转
+    - 所有-自动
+    - 所有-手动
+    - 直连
+
+proxy-groups:
+  # --- 默认代理总控：改为 fallback 类型 ---
+  - name: 🚀 默认代理
+    type: select
+    proxies:
+      - 香港-故转
+      - 日本-故转
+      - 美国-故转
+      - 台湾-故转
+      - 新加坡-故转
+      - 其他-故转
+      - 所有-自动
+      - 所有-手动
+      - 直连
+      
+  # ============================================
+  # 第一梯队：日常高频手动切换的 App / 场景组 (前台展示)
+  # ============================================
+  - {name: Speedtest, <<: *default} 
+  - {name: AI, <<: *default}
+  - {name: Google, <<: *default}
+  - {name: YouTube, <<: *default}
+  - {name: Telegram, <<: *default}
+  - {name: Twitter(X), <<: *default}
+  - {name: GitHub, <<: *default}
+  - {name: Crypto, <<: *default}
+  - {name: Emby, <<: *default}
+  - {name: Meta, <<: *default}
+  - {name: Stream Media, <<: *default}
+  - {name: PayPal, <<: *default}
+  - {name: Apple, <<: *default}
+  - {name: Microsoft, <<: *default}
+  - {name: Steam, <<: *default}
+  - {name: Game, <<: *default}
+  - {name: 国外, <<: *default}
+  - {name: 兜底, <<: *default}
+         
+  # ============================================
+  # 地区强主备策略 (Kelvin 极简定制版)
+  # ============================================
+
+  # --- 香港 ---
+  - name: 香港-故转
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    timeout: 5000
+    lazy: false
+    proxies: [香港-优选, 香港-备选]
+
+  - name: 香港-优选
+    type: load-balance
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    strategy: consistent-hashing  # <--- 极其关键：防止同一网站疯狂跳 IP
+    use: *Primary      # <--- 依然自动读取总控台的主力机场
+    filter: "(?i)(港|HK|Hong)"
+
+  - name: 香港-备选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Backup       # <--- 自动读取总控台的备用机场
+    filter: "(?i)(港|HK|Hong)"
+
+# --- 日本 ---
+  - name: 日本-故转
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    timeout: 5000
+    lazy: false
+    proxies: [日本-优选, 日本-备选]
+
+  - name: 日本-优选
+    type: load-balance
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    strategy: consistent-hashing  # <--- 极其关键：防止同一网站疯狂跳 IP
+    use: *Primary      # <--- 依然自动读取总控台的主力机场
+    filter: "(?i)(日本|JP|Japan|东京|大阪)"
+
+  - name: 日本-备选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Backup
+    filter: "(?i)(日本|JP|Japan|东京|大阪)"
+ 
+  # --- 美国 ---
+  - name: 美国-故转
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    timeout: 5000
+    lazy: false
+    proxies: [美国-优选, 美国-备选]
+
+  - name: 美国-优选
+    type: load-balance
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    strategy: consistent-hashing  # <--- 极其关键：防止同一网站疯狂跳 IP
+    use: *Primary
+    filter: "(?i)(美国|United States|US(?!A))"
+
+  - name: 美国-备选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Backup
+    filter: "(?i)(美国|United States|US(?!A))"
+
+  # --- 台湾 ---
+  - name: 台湾-故转
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    timeout: 5000
+    lazy: false
+    proxies: [台湾-优选, 台湾-备选]
+
+  - name: 台湾-优选
+    type: load-balance
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    strategy: consistent-hashing  # <--- 极其关键：防止同一网站疯狂跳 IP
+    use: *Primary      # <--- 同样自动读取
+    filter: "(?i)(台|TW|Tai)"
+
+  - name: 台湾-备选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Backup       # <--- 同样自动读取
+    filter: "(?i)(台|TW|Tai)"
+
+  # --- 新加坡 ---
+  - name: 新加坡-故转
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    timeout: 5000
+    lazy: false
+    proxies: [新加坡-优选, 新加坡-备选]
+
+  - name: 新加坡-优选
+    type: load-balance
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    strategy: consistent-hashing  # <--- 极其关键：防止同一网站疯狂跳 IP
+    use: *Primary
+    filter: "(?i)(新加坡|SG|Singapore|狮城)"
+
+  - name: 新加坡-备选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Backup
+    filter: "(?i)(新加坡|SG|Singapore|狮城)"
+
+   # --- 其他 ---
+  - name: 其他-故转
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    timeout: 5000
+    lazy: false
+    proxies: [其他-优选, 其他-备选]
+    
+  - name: 其他-优选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Primary
+    filter: "^(?!.*(?:港|Hong Kong|HK|台|Taiwan|TW|日本|Japan|JP|新加坡|SG|Singapore|美国|United States|US|直连|拒绝)).*"
+    
+  - name: 其他-备选
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 100
+    use: *Backup
+    filter: "^(?!.*(?:港|Hong Kong|HK|台|Taiwan|TW|日本|Japan|JP|新加坡|SG|Singapore|美国|United States|US|直连|拒绝)).*"   
+
+  # --- 全局总控 ---
+  - name: 所有-自动
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 180
+    tolerance: 100
+    use: [灵魂云, PolYun, 猫耳云]
+    filter: "^(?!.*(?:直连|拒绝))"
+      
+  - name: 所有-手动
+    type: select
+    include-all: true
+    filter: "^(?!.*(?:直连|拒绝))"
+    
+# ========================
+# 规则引擎 (精准度优先 / App-First)
+# ========================
+rules:
+ # ========================
+  # 0. 基础网络与局域网 (最高优先级)
+  # ========================
+  - DST-PORT,123,直连
+  - GEOIP,LAN,直连,no-resolve
+  - RULE-SET,Private,直连
+  - RULE-SET,Hijacking,拒绝
+
+  # ========================
+  # 1. 个人自定义强制规则 (你的绝对特权！)
+  # 必须放在各大厂规则前面，保证你随时可以手动“硬超车”
+  # ========================
+  - RULE-SET,TEST,Speedtest
+  - RULE-SET,speedtest_domain,Speedtest
+  - RULE-SET,oversea,AI          
+  - RULE-SET,Emby,Emby           
+  - RULE-SET,zhilian,直连        
+
+  # ========================
+  # 2. 广告与隐私拦截 (全局杀毒)
+  # 放在具体 App 前面，不管国内国外，是广告就先杀掉
+  # ========================
+  - RULE-SET,banAd_domain,拒绝
+  - RULE-SET,Privacy,拒绝
+
+  # ========================
+  # 3. 高敏感与核心服务 (防风控与绝对畅通)
+  # 微信、金融等必须走真实 IP 的业务
+  # ========================
+  - RULE-SET,wechat_domain,直连
+  - RULE-SET,wechat_asn,直连,no-resolve
+  - RULE-SET,bank_cn_asn,直连,no-resolve
+  
+  # --- 新增：高并发流媒体极速直连 (硬编码提速) ---
+  - DOMAIN-SUFFIX,amemv.com,直连
+  - DOMAIN-SUFFIX,douyinvod.com,直连
+  - DOMAIN-SUFFIX,snssdk.com,直连
+  - DOMAIN-SUFFIX,douyin.com,直连
+  - DOMAIN-SUFFIX,xiaohongshu.com,直连
+  - DOMAIN-SUFFIX,xhscdn.com,直连
+  
+  # --- AI 专属规则 ---
+  - RULE-SET,AppleAI,AI
+  - RULE-SET,ChatGPT,AI
+  - RULE-SET,Claude,AI
+  - RULE-SET,Gemini,AI
+  - RULE-SET,Copilot,AI
+  - RULE-SET,Grok,AI
+
+  # ========================
+  # 4. 特定海外 APP 与服务
+  # ========================
+  - RULE-SET,Telegram,Telegram
+  - RULE-SET,TelegramIP,Telegram,no-resolve
+  - RULE-SET,Twitter,Twitter(X)
+  - RULE-SET,Discord,国外          
+  - RULE-SET,Facebook,Meta
+  - RULE-SET,Instagram,Meta
+  - RULE-SET,WhatsApp,Meta
+  - RULE-SET,threads_domain,Meta
+ 
+  # --- 流媒体 ---
+  - RULE-SET,YouTube,YouTube
+  - RULE-SET,Netflix,Stream Media
+  - RULE-SET,NetflixIP,Stream Media,no-resolve
+  - RULE-SET,Disney,Stream Media
+  - RULE-SET,Spotify,Stream Media
+  - RULE-SET,TikTok,Stream Media
+  - RULE-SET,AppleTV,Apple
+  
+  # --- 常用服务与生态 ---
+  - RULE-SET,Google,Google
+  - RULE-SET,GoogleIP,Google,no-resolve
+  - RULE-SET,GitHub,GitHub
+  - RULE-SET,Microsoft,Microsoft
+  - RULE-SET,apple_cn_domain,直连
+  - RULE-SET,Apple,Apple
+  - RULE-SET,AppleTV,Apple
+  - RULE-SET,PayPal,PayPal
+  - RULE-SET,Nvidia,Game
+  
+  # --- 游戏与加密货币 ---
+  - RULE-SET,Steam,Steam
+  - RULE-SET,Nintendo,Game
+  - RULE-SET,PlayStation,Game
+  - RULE-SET,Blizzard,Game
+  - RULE-SET,UBI_domain,Game
+  - RULE-SET,Sony_domain,Game
+  - RULE-SET,Binance,Crypto
+  - RULE-SET,OKX,Crypto
+  - RULE-SET,Crypto,Crypto
+
+  # ========================
+  # 5. 国内大厂与影音 (常规放行)
+  # ========================
+  - RULE-SET,steam_cn_domain,直连
+  - RULE-SET,steamcdn_domain,直连
+  - RULE-SET,steamcdn_ip,直连,no-resolve
+  - RULE-SET,alibaba_domain,直连
+  - RULE-SET,tencent_domain,直连
+  - RULE-SET,xiaomi_domain,直连
+
+  # ========================
+  # 6. 大颗粒兜底 (最后防线)
+  # ========================
+  - RULE-SET,Proxy,国外
+
+  - RULE-SET,Custom_Direct,直连  
+  #- RULE-SET,Direct,直连
+  - RULE-SET,oc-cn-domain,直连  
+  - GEOIP,CN,直连
+
+  - MATCH,兜底
+  
+# ========================
+# 规则集 (保持链接)
+# ========================
+rule-anchor:
+  ip: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs}
+  domain: &domain {type: http, interval: 86400, behavior: domain, format: mrs}
+  class: &class {type: http, interval: 86400, behavior: classical, format: text}
+
+rule-providers:
+  # 文本格式列表
+  TEST: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/kelvinpwf/clash/refs/heads/main/test.list"}
+  AppleAI: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/kelvinpwf/clash/refs/heads/main/appleai.list"}
+  Crypto: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Surge/Crypto/Crypto.list"}
+  Copilot: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/liandu2024/clash/refs/heads/main/list/Copilot.list"}
+  Grok: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/liandu2024/clash/refs/heads/main/list/Grok.list"} 
+  Gemini: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/classical/google-gemini.list"}
+  Custom_Direct: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/Aethersailor/Custom_OpenClash_Rules/refs/heads/main/rule/Custom_Direct.list"}
+  zhilian: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/kelvinpwf/clash/refs/heads/main/direct-clash.list"}
+  oversea: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/kelvinpwf/clash/refs/heads/main/proxy.list"}
+  Emby: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/kelvinpwf/clash/refs/heads/main/emby.list"}
+  # MRS 二进制优化规则
+  ChatGPT: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/openai.mrs"}
+  Claude: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/anthropic.mrs"}
+  Discord: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/discord.mrs"}
+  GitHub: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/github.mrs"}
+  Apple: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/apple.mrs"} 
+  Google: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/google.mrs"} 
+  GoogleIP: {<<: *ip, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/google.mrs"} 
+  YouTube: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/youtube.mrs"} 
+  Twitter: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/x.mrs"}
+  Facebook: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/facebook.mrs"}
+  Instagram: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/instagram.mrs"} 
+  TelegramIP: {<<: *ip, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/telegram.mrs"}
+  Telegram: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/telegram.mrs"}
+  WhatsApp: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/whatsapp.mrs"}
+  Microsoft: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/microsoft.mrs"}
+  OKX: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/okx.mrs"}
+  Binance: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/binance.mrs"}
+  TikTok: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/tiktok.mrs"}
+  Netflix: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/netflix.mrs"}
+  NetflixIP: {<<: *ip, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geoip/netflix.mrs"}
+  Disney: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/disney.mrs"}
+  Spotify: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/spotify.mrs"}
+  Steam: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam.mrs"}
+  Blizzard: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/blizzard.mrs"}
+  PlayStation: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/playstation.mrs"}
+  Nintendo: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/nintendo.mrs"}
+  Proxy: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/geolocation-!cn.mrs"}
+  Nvidia: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/nvidia.mrs"}
+  PayPal: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/paypal.mrs"}
+  AppleTV: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/apple-tv.mrs"}
+  Privacy: {<<: *domain, url: "https://gh-proxy.org/github.com/metacubex/meta-rules-dat/raw/refs/heads/meta/geo/geosite/category-ads-all.mrs"}
+  Hijacking: {<<: *class, url: "https://gh-proxy.org/raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Hijacking/Hijacking.list"}
+  Private: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/private.mrs"}
+  wechat_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/WeChat.mrs"}
+  wechat_asn: {<<: *ip, url: "https://gh-proxy.org/github.com/Lanlan13-14/Rules/raw/refs/heads/main/rules/IP/wechat-ip.mrs"}
+  tencent_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/tencent.mrs"}
+  alibaba_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/alibaba.mrs"}
+  xiaomi_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/xiaomi.mrs"}
+  oc-cn-domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/oc-cn.mrs"}
+  bank_cn_asn: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/category-bank-cn.mrs"}
+  steam_cn_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/steam%40cn.mrs"}
+  steamcdn_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/Steam-domain.mrs"}
+  steamcdn_ip: {<<: *ip, url: "https://gh-proxy.org/raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/IP/steamCDN-ip.mrs"}
+  threads_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/threads.mrs"}
+  apple_cn_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/apple-cn.mrs"}
+  UBI_domain: {<<: *domain, url: "https://raw.githubusercontent.com/Lanlan13-14/Rules/refs/heads/main/rules/Domain/ubi.mrs" }  
+  Sony_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/sony.mrs"}
+  speedtest_domain: {<<: *domain, url: "https://gh-proxy.org/raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/speedtest.mrs"}
+  banAd_domain: {<<: *domain, url: "https://gh-proxy.org/github.com/metacubex/meta-rules-dat/raw/refs/heads/meta/geo/geosite/category-ads-all.mrs"}
